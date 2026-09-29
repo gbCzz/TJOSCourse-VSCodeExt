@@ -17,6 +17,11 @@
         "command": "tongjios.showStatus",
         "title": "检查状态",  
         "category": "TJOS"
+      },
+      {
+        "command": "tongjios.login",
+        "title": "登录课程平台账号",
+        "category": "TJOS"
       }
     ]
   },
