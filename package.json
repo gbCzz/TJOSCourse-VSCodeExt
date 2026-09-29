@@ -14,8 +14,9 @@
   "contributes": {
     "commands": [
       {
-        "command": "tongjios.helloWorld",
-        "title": "Hello World"
+        "command": "tongjios.showStatus",
+        "title": "检查状态",  
+        "category": "TJOS"
       }
     ]
   },
