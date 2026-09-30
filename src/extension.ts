@@ -1,39 +1,22 @@
 import * as vscode from 'vscode';
+import { registerAuthCmd } from './commands/auth';
+import { registerStatusCommand } from './commands/status';
+import { AuthService } from './platform/authService';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-  console.log('Congratulations, your extension "tongjios" is now active!');
-
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
-
+  // 创建输出窗口
   const output = vscode.window.createOutputChannel('TongjiOS');
+  context.subscriptions.push(output);
 
-  const showStatusCommand = vscode.commands.registerCommand('tongjios.showStatus', () => {
-    vscode.window.showInformationMessage('TongjiOS 已激活');
+  // 获取认证服务对象；该对象获取基本信息后尝试登录、存储认证信息或抛出错误
+  const auth = new AuthService(context.secrets);
 
-    const workspaceName = vscode.workspace.workspaceFolders?.[0]?.name ?? '(无工作区)';
+  // 发烟测试
+  registerStatusCommand(context, output);
 
-    const editor = vscode.window.activeTextEditor;
-    const fileName = editor?.document.fileName ?? '(无打开文件)';
-    const language = editor?.document.languageId ?? '(未知语言)';
-
-    output.appendLine(`[showStatus] ${new Date().toISOString()}`);
-    output.appendLine(`工作区：${workspaceName}`);
-    output.appendLine(`当前文件：${fileName}`);
-    output.appendLine(`语言：${language}`);
-    output.appendLine('---');
-
-    output.show(true);
-  });
-
-  context.subscriptions.push(showStatusCommand);
+  // 用指定的登录服务对象登录课程平台
+  registerAuthCmd(context, auth, output);
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {}
 
