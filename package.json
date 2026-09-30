@@ -12,10 +12,26 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "TongjiOS",
+      "properties": {
+        "tongjios.platformUrl": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "markdownDescription": "课程平台的 HTTPS 基址，可含部署路径前缀；不要填写登录页面路径、账号或查询参数。请使用课程提供的实际地址。"
+        }
+      }
+    },
     "commands": [
       {
         "command": "tongjios.showStatus",
         "title": "检查状态",  
+        "category": "TJOS"
+      },
+      {
+        "command": "tongjios.login",
+        "title": "登录课程平台账号",
         "category": "TJOS"
       }
     ]
@@ -26,12 +42,14 @@
     "watch": "tsc -watch -p ./",
     "pretest": "yarn run compile && yarn run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "test:unit": "npm run compile && mocha --ui tdd out/test/auth.test.js"
   },
   "devDependencies": {
     "@types/vscode": "^1.138.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "24.x",
+    "mocha": "^11.7.6",
     "typescript-eslint": "^8.61.1",
     "eslint": "^10.5.0",
     "typescript": "^6.0.3",
