@@ -1,10 +1,12 @@
 # TJOSCourse-VSCodeExt
-An extension on VS Code about Tongji OS Course of undergruated CS/DS/IS
+同济大学本科《操作系统》课程实验平台配套 VS Code 扩展。
+
+当前处于开发预览阶段，已支持平台账号登录、身份核验与会话安全保存。
 
 ## 开发预览：命令登录
 
 1. 执行 `npm run compile`，按 F5 打开 Extension Development Host。
-2. 在该窗口的用户设置中搜索 `tongjios.platformUrl`，填写课程提供的实际 HTTPS 平台基址，可包含部署路径前缀，不要填写 `/api/auth/login` 或登录页面地址。
+2. 在该窗口的用户设置中搜索 `tongjios.platformUrl`，填写课程提供的实际 HTTPS 平台基址，可包含部署路径前缀，不要填写 `/api/auth/login` 或登录页面地址。当前实现会在配置为空时使用 https://vesper-center.gardilily.com；如需连接其他部署，请显式设置平台基址。
 3. 在命令面板执行 **TJOS: 登录课程平台账号**，输入用户名和密码。用户名会去除首尾空格，密码保留原样并以掩码显示。
 4. 扩展请求 `POST api/auth/login`，再携带 `os_session` Cookie 请求 `GET api/auth/me`。身份核验和安全存储均成功后显示登录成功。
 5. 在“输出 → TongjiOS”查看脱敏结果；**TJOS: 检查状态**仍可检查扩展、工作区与当前编辑器。
@@ -15,70 +17,29 @@ An extension on VS Code about Tongji OS Course of undergruated CS/DS/IS
 
 验证：`npm run test:unit` 运行离线认证测试，`npm run lint` 检查代码；`npm test` 使用 Extension Host 运行测试。离线模拟响应不代表真实平台联调通过，需要在开发宿主手动验证成功登录、错误密码及取消。
 
-## Features
+## 当前功能
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- 检查扩展激活状态、当前工作区和编辑器信息。
+- 手动登录课程平台，并通过身份接口核验用户。
+- 使用 VS Code SecretStorage 保存会话，不保存密码。
+- 支持登录取消、请求超时和脱敏错误提示。
 
-For example if there is an image subfolder under your extension project workspace:
+## 环境要求
 
-\!\[feature X\]\(images/feature-x.png\)
+- VS Code 1.138.0 或更高版本。
+- 可访问课程平台的网络环境及有效账号。
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## 扩展设置
 
-## Requirements
+`tongjios.platformUrl`：平台 HTTPS 基址，支持部署路径前缀。
+此设置为应用级配置，工作区不能覆盖。
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## 当前限制
 
-## Extension Settings
+- 会话已经保存，但尚不支持重启后恢复或退出登录。
+- “检查状态”暂不显示账号认证状态。
+- 尚不支持仓库浏览、文件下载、同步、终端及调试。
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## 更新记录
 
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+参见 [CHANGELOG.md](CHANGELOG.md)。
