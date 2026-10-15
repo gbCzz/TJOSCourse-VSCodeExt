@@ -9,7 +9,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
@@ -26,7 +28,7 @@
     "commands": [
       {
         "command": "tongjios.showStatus",
-        "title": "检查状态",  
+        "title": "检查状态",
         "category": "TJOS"
       },
       {
@@ -61,3 +63,4 @@
     "serialize-javascript": "^7.0.6"
   }
 }
+
