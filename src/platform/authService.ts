@@ -1,4 +1,4 @@
-import { AuthClient, PlatformIdentity, normalizeBaseUrl } from './authClient';
+import { AuthClient, PlatformIdentity, SessionCookie, normalizeBaseUrl } from './authClient';
 import { PlatformError } from './errors';
 
 /**
@@ -8,6 +8,8 @@ import { PlatformError } from './errors';
  */
 export interface SecretStore {
   store(key: string, value: string): PromiseLike<void>;
+  get(key: string): PromiseLike<string | undefined>;
+  delete(key: string): PromiseLike<void>;
 }
 
 /**
@@ -20,6 +22,22 @@ export class AuthService {
     private readonly secrets: SecretStore,
     private readonly createClient = (baseUrl: string) => new AuthClient(baseUrl),
   ) {}
+
+  private async deleteSavedSession(key: string): Promise<void> {
+    try {
+      await this.secrets.delete(key);
+    } catch {
+      throw new PlatformError('Storage', '无法清除失效会话，请检查系统凭据存储后重试。');
+    }
+  }
+
+  private async getSecrets(key: string): Promise<string | undefined> {
+    try {
+      return await this.secrets.get(key);
+    } catch {
+      throw new PlatformError('Storage', `从 Secrets 读取 ${key} 字段时失败`);
+    }
+  }
 
   /**
    * 平台登录方法
@@ -67,6 +85,93 @@ export class AuthService {
     } catch {
       throw new PlatformError('Storage', '平台身份核验成功，但无法安全保存会话，请检查系统凭据存储后重试。');
     }
+    return identity;
+  }
+
+  /**
+   * 从先前保存的会话 Cookie 恢复验证状态
+   * @param baseUrl 请求基址
+   * @param signal 外层传入的主动取消信号
+   */
+  async restore(baseUrl: string, signal?: AbortSignal): Promise<PlatformIdentity | undefined> {
+    // 基址规范化
+    const normalizedUrl = normalizeBaseUrl(baseUrl);
+
+    // vscode 插件内部以如下键值对保存，raw 是 Stringified JSON
+    const key = `tongjios.session:${normalizedUrl}`;
+    const raw = await this.getSecrets(key);
+
+    if (raw === undefined || raw === null || raw.trim() === 'null') {
+      return undefined;
+    }
+
+    const session = ((): SessionCookie | undefined => {
+      try {
+        return JSON.parse(raw).session;
+      } catch {
+        return undefined;
+      }
+    })();
+
+    if (session === undefined) {
+      await this.deleteSavedSession(key);
+      return undefined;
+    }
+
+    const client = this.createClient(normalizedUrl);
+    try {
+      client.restoreSession(session);
+    } catch {
+      await this.deleteSavedSession(key);
+      return undefined;
+    }
+
+    // 当出现未授权时，赋值 identity 为 undefined
+    const identity = await (async (): Promise<PlatformIdentity | undefined> => {
+      try {
+        return await client.getIdentity(signal);
+      } catch (error) {
+        if (error instanceof PlatformError && error.code === 'Unauthorized') {
+          await this.deleteSavedSession(key);
+          return undefined;
+        }
+
+        throw error;
+      }
+    })();
+
+    if (identity === undefined) {
+      return undefined;
+    }
+
+    const newSession = client.session;
+
+    if (!newSession) {
+      await this.deleteSavedSession(key);
+      return undefined;
+    }
+
+    // 检查用户是否主动取消
+    if (signal?.aborted) {
+      throw new PlatformError('Cancelled', '登录已取消。');
+    }
+
+    try {
+      // 按照平台基址存储会话，保存会话：
+      // 平台、登录凭证、平台核验后的用户名
+      await this.secrets.store(
+        `tongjios.session:${normalizedUrl}`,
+        JSON.stringify({
+          version: 1,
+          baseUrl: normalizedUrl,
+          session: newSession,
+          username: identity.username,
+        }),
+      );
+    } catch {
+      throw new PlatformError('Storage', '平台身份核验成功，但无法安全保存会话，请检查系统凭据存储后重试。');
+    }
+
     return identity;
   }
 }

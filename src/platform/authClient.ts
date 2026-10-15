@@ -56,6 +56,35 @@ export class AuthClient {
     return this.cookie && { ...this.cookie };
   }
 
+  restoreSession(session: SessionCookie) {
+    const { value, path, expiresAt } = session;
+
+    // 检验 Cookie 值规则
+    if (typeof value !== 'string' || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]+$/.test(value)) {
+      throw new PlatformError('Protocol', '保存的 Cookie 无效');
+    }
+
+    // 检查平台身份接口是否匹配
+    const identityPath = new URL('api/auth/me', this.baseUrl).pathname;
+
+    if (typeof path !== 'string' || !path.startsWith('/') || !matchesPath(identityPath, path)) {
+      throw new PlatformError('Protocol', '保存的 Cookie 不适用于该平台');
+    }
+
+    // 检查是否过期
+    if (expiresAt !== undefined) {
+      if (typeof expiresAt !== 'number' || !Number.isFinite(expiresAt)) {
+        throw new PlatformError('Protocol', '保存的过期时间无效');
+      }
+
+      if (expiresAt <= Date.now()) {
+        throw new PlatformError('Unauthorized', '保存的会话已过期');
+      }
+    }
+
+    this.cookie = { value, path, expiresAt };
+  }
+
   async login(username: string, password: string, signal?: AbortSignal): Promise<PlatformIdentity> {
     this.cookie = undefined;
     await this.request('api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }, signal);
