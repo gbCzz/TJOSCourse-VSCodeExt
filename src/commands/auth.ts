@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { AuthService } from '../platform/authService';
-import { normalizeBaseUrl } from '../platform/authClient';
 import { toPlatformError } from '../platform/errors';
+import { getPlatformBaseUrl } from '../config';
 
 /**
  * 注册命令：平台登录相关
@@ -26,11 +26,7 @@ export function registerAuthCmd(context: vscode.ExtensionContext, auth: AuthServ
       busy = true;
       try {
         // 获取课程平台 URL
-        let configuredUrl = vscode.workspace.getConfiguration('tongjios').get<string>('platformUrl', '');
-        if (!configuredUrl.trim()) {
-          configuredUrl = 'https://vesper-center.gardilily.com';
-        }
-        const baseUrl = normalizeBaseUrl(configuredUrl);
+        const baseUrl =getPlatformBaseUrl();
 
         // 用户名（学号）输入
         const username = await vscode.window.showInputBox({

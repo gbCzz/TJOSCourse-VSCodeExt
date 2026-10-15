@@ -13,6 +13,16 @@ export interface SecretStore {
 }
 
 /**
+ * 接口 AuthState 规定了一类登录状态 \
+ * 需要提供一个已创建的客户端对象，标明请求基址和身份认证信息
+ */
+export interface AuthState {
+  readonly client: AuthClient;
+  readonly baseUrl: string;
+  readonly identity: PlatformIdentity;
+}
+
+/**
  * 认证服务类
  * @property secrets 提供存储功能的对象
  * @property creatClient 一个通过 URL 创建 AuthClient 的方法，使得认证客户端可以自定义，不依赖真实平台
@@ -21,6 +31,7 @@ export class AuthService {
   constructor(
     private readonly secrets: SecretStore,
     private readonly createClient = (baseUrl: string) => new AuthClient(baseUrl),
+    private currentState?: AuthState,
   ) {}
 
   private async deleteSavedSession(key: string): Promise<void> {
@@ -37,6 +48,14 @@ export class AuthService {
     } catch {
       throw new PlatformError('Storage', `从 Secrets 读取 ${key} 字段时失败`);
     }
+  }
+
+  get current() {
+    return this.currentState;
+  }
+
+  clearCurrent() {
+    this.currentState = undefined;
   }
 
   /**
@@ -85,6 +104,13 @@ export class AuthService {
     } catch {
       throw new PlatformError('Storage', '平台身份核验成功，但无法安全保存会话，请检查系统凭据存储后重试。');
     }
+
+    this.currentState = {
+      client,
+      baseUrl: normalizedUrl,
+      identity,
+    };
+
     return identity;
   }
 
@@ -171,6 +197,12 @@ export class AuthService {
     } catch {
       throw new PlatformError('Storage', '平台身份核验成功，但无法安全保存会话，请检查系统凭据存储后重试。');
     }
+
+    this.currentState = {
+      client,
+      baseUrl: normalizedUrl,
+      identity,
+    };
 
     return identity;
   }
