@@ -12,6 +12,8 @@
 
 ## 2. HTTP、认证和错误模型
 
+实现进度（2026-10-08）：已实现手动登录、os_session Cookie 管理、me 身份核验、SecretStorage 会话保存及离线认证测试代码；会话恢复、退出和持久化失效凭据清理尚未实现。以下为目标约定，不代表全部已实现；扩展宿主联调结果需另行记录。
+
 平台基址统一配置；路径和 Query 由 URL API 编码。生产客户端验证 TLS，使用可信 CA，不继承临时跳过证书的调研脚本。设置超时、取消与有界正文；不要把 HAR 的 HTTP/2 伪首部复制到客户端。
 
 已观察认证：POST `/api/auth/login` 的 JSON 为 username/password；响应含身份字段，部分样本含 token。浏览器设置 os_session Cookie：HttpOnly、Secure、SameSite=Strict、Max-Age=2592000。新增项目 HAR 有 GET `/api/auth/me` 成功响应，含 ok/username/role/display_name/is_teacher。POST logout 有成功空正文及清除 Cookie 的证据。
